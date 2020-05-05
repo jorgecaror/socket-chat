@@ -20,19 +20,22 @@ io.on('connection', (client) => {
 
         usuarios.agregarPersona(client.id, data.nombre, data.sala);
         //enviar notificación de los clientes que se conectan
-        client.broadcast.to(data.sala).emit('listaPersonas', usuarios.getPersonasPorSalas(data.sala));
+        client.broadcast.to(data.sala).emit('listaPersona', usuarios.getPersonasPorSalas(data.sala));
+        //aviso de cuando una persona se conecta
+        client.broadcast.to(data.sala).emit('crearMensaje', crearMensaje('administrador', `${data.nombre} se unió`));
         //retorna las personas conectadas en el chat
         callback(usuarios.getPersonasPorSalas(data.sala));
 
     });
 
-    client.on('crearMensaje', (data) => {
+    client.on('crearMensaje', (data, callback) => {
 
         let persona = usuarios.getPersona(client.id)
 
         let mensaje = crearMensaje(persona.nombre, data.mensaje);
-
         client.broadcast.to(persona.sala).emit('crearMensaje', mensaje);
+
+        callback(mensaje);
     })
 
     client.on('disconnect', () => {
@@ -41,7 +44,7 @@ io.on('connection', (client) => {
         //indica que usuario abandona el chat
         client.broadcast.to(personaBorrada.sala).emit('crearMensaje', crearMensaje('administrador', `${personaBorrada.nombre} salió`));
         //mustra la lista de los usuarios conectados
-        client.broadcast.to(personaBorrada.sala).emit('listaPersonas', usuarios.getPersonasPorSalas(personaBorrada.sala));
+        client.broadcast.to(personaBorrada.sala).emit('listaPersona', usuarios.getPersonasPorSalas(personaBorrada.sala));
     });
 
     //mensajes privados
